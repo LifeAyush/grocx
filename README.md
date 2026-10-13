@@ -1,59 +1,49 @@
-# GrocX API
+# grocx
 
-A robust FastAPI application that compares product prices across multiple e-commerce platforms, allowing users to find the best deals and optimize their shopping basket for the lowest total price.
+Give it a grocery list and it chooses which quick-commerce app to buy each item from so the basket is cheapest, including discounts.
 
-## Features
+You send the items. The optimizer compares prices across the apps, applies each discount, and returns one basket: every item assigned to the app that makes the total lowest, plus how much you save.
 
-* **Multi-platform Price Comparison** : Scrape and compare prices from four major e-commerce platforms
-* **Basket Optimization** : Find the optimal distribution of products across platforms for the lowest total cost
-* **Product Name Mapping** : Automatically map generic product names to platform-specific listings
-* **Concurrent Scraping** : Efficiently fetch data from multiple sources simultaneously
-* **Caching** : Reduce latency and external requests with intelligent caching
-* **RESTful API** : Clean, well-documented endpoints with request validation
+## Optimizer, cache, and API
 
-## Tech Stack
+- **Optimizer.** For each item it picks the app with the lowest price after discount, then totals the basket and the savings.
+- **Cache.** Prices and discounts sit in a short-lived cache, so a repeat lookup does not fetch the same product again.
+- **API.** `POST /api/v1/get_prices` takes the grocery list and returns the optimized basket.
 
-* **FastAPI** : High-performance web framework for building APIs
-* **Pydantic** : Data validation and settings management
-* **Asyncio** : Asynchronous I/O for concurrent operations
-* **Docker** : Containerization for consistent deployment
-* **pytest** : Comprehensive test suite
-
-## Installation
+## How to run
 
 ### Prerequisites
 
-* Python 3.9+
-* pip
+- Python 3.9+
+- pip
 
 ### Setup
 
 1. Clone the repository:
+
    ```bash
-   git clone https://github.com/lifeayush/grocX_backend.git
-   cd grocX_backend
+   git clone https://github.com/LifeAyush/grocx.git
+   cd grocx
    ```
+
 2. Create and activate a virtual environment:
+
    ```bash
    python -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
+
 3. Install dependencies:
+
    ```bash
    pip install -r requirements.txt
    ```
-4. Create a `.env` file based on the example:
+
+4. Create a `.env` file from the example:
+
    ```bash
    cp .env.example .env
-   # Edit .env with your configuration
    ```
-
-### Running with Docker
-
-```bash
-docker build -t grocX_backend .
-docker run -p 8000:8000 grocX_backend
-```
 
 ### Running locally
 
@@ -61,86 +51,25 @@ docker run -p 8000:8000 grocX_backend
 uvicorn app.main:app --reload
 ```
 
-The API will be available at http://localhost:8000
+The API is at http://localhost:8000. Interactive docs are at http://localhost:8000/docs.
 
-## Usage
+### Request
 
-### API Endpoints
-
-#### Get Prices
-
-```
-POST /api/v1/prices
-```
-
-Request body:
+`POST /api/v1/get_prices`
 
 ```json
 {
-  "products": [
-    {"name": "Milk", "quantity": 1},
-    {"name": "Bread", "quantity": 2},
-    {"name": "Eggs", "quantity": 1}
-  ],
-  "optimize": true
-}
-```
-
-Response:
-
-```json
-{
-  "basket": {
-    "total_price": 12.47,
-    "platforms": [
-      {
-        "name": "Platform A",
-        "products": [
-          {"name": "Milk", "price": 2.99, "quantity": 1}
-        ],
-        "subtotal": 2.99
-      },
-      {
-        "name": "Platform C",
-        "products": [
-          {"name": "Bread", "price": 2.49, "quantity": 2},
-          {"name": "Eggs", "price": 4.50, "quantity": 1}
-        ],
-        "subtotal": 9.48
-      }
-    ]
-  },
-  "price_comparison": [
-    {
-      "product": "Milk",
-      "prices": [
-        {"platform": "Platform A", "price": 2.99},
-        {"platform": "Platform B", "price": 3.49},
-        {"platform": "Platform C", "price": 3.29},
-        {"platform": "Platform D", "price": 3.15}
-      ]
-    },
-    // Additional products...
+  "items": [
+    {"name": "Milk", "quantity": 1, "unit": "liter"},
+    {"name": "Bread", "quantity": 2, "unit": "loaf"},
+    {"name": "Eggs", "quantity": 12, "unit": "piece"}
   ]
 }
 ```
 
-## Project Structure
-
-The project structure and the LLD is highlighted in the docs directory of the repository
-
-## Adding a New Platform
-
-To add support for a new e-commerce/quick-commerce platform:
-
-1. Create a new scraper class in `app/scrapers/` that inherits from `BaseScraper`
-2. Implement the required methods: `get_price()` and `get_discount()`
-3. Add platform-specific product mappings to `data/product_mappings.json`
-4. Register the new scraper in `app/services/scraper_manager.py`
+The response includes `total_price`, `savings`, and each item with the chosen app, original price, discount, and final price.
 
 ## Testing
-
-Run the test suite with:
 
 ```bash
 pytest
@@ -151,7 +80,3 @@ Run tests with coverage:
 ```bash
 pytest --cov=app
 ```
-
-    
-
-<p align="center">🚀 Created with ❤️ by Ayush Patil 🚀</p>
